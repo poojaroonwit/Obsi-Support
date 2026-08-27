@@ -12,6 +12,11 @@ const readRawBody = (req) => new Promise((resolve, reject) => {
   req.on('error', reject);
 });
 
+const tryRoute = async (organizationId, ticketId) => {
+  try { await routeTicket({ organizationId, ticketId }); }
+  catch (error) { console.error('Automatic email ticket routing failed:', error); }
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -25,7 +30,7 @@ export default async function handler(req, res) {
     const service = createEmailService({ repository, transport: resendTransport, env: process.env });
     const result = await service.handleWebhookEvent(event);
     if (event.type === 'email.received' && result?.created && result?.ticket?.organizationId && result?.ticketId) {
-      await routeTicket({ organizationId: result.ticket.organizationId, ticketId: result.ticketId });
+      await tryRoute(result.ticket.organizationId, result.ticketId);
     }
     return res.status(200).json({ success: true, result });
   } catch (error) {
