@@ -15,6 +15,10 @@ Obsi Support is the customer help-desk product in the Obsi suite. It is independ
 - Requester-email matching before an inbound message can join an existing ticket.
 - Agent replies delivered by email with idempotency keys and standard thread headers.
 - Email delivery status tracked on the conversation, including delayed, failed and bounced states.
+- Tenant-scoped support teams, members, capacity and routing rules.
+- Automatic least-load assignment for new portal/API/email tickets.
+- Manual team/assignee reassignment with cross-team and cross-tenant validation.
+- Team/assignee inbox filters and assignment audit/system messages.
 - PostgreSQL tenant isolation through `organization_id` on every ticket query.
 - Outborn Account OAuth 2.0 Authorization Code + PKCE login using client `outborn-obsi-support-web`.
 - Railway/Docker-friendly production build.
@@ -43,10 +47,24 @@ Inbound webhooks are verified against the raw request body. Duplicate provider/m
 
 If the Resend outbound variables are not configured, agent replies continue to work as customer-visible portal replies without attempting email delivery.
 
+## Assignment groups & routing
+
+Open **Routing** from the sidebar to configure teams, agents, capacities and ordered rules.
+
+- A rule can match one channel and/or priority in the first routing slice; empty conditions match all.
+- The first enabled matching rule selects the destination team.
+- Automatic assignment chooses the active member with the lowest `active ticket load / capacity` ratio.
+- Members at or above capacity are not eligible. If every active member is full, the team is assigned but the ticket remains unassigned.
+- New portal, manual/API and email-created tickets route automatically. Existing threaded replies keep their current ownership.
+- Manual assignment is validated against the current organization and selected team; free-form assignee IDs are rejected.
+- Routing errors never block ticket intake. The ticket is created and remains unassigned if automatic routing cannot run.
+
+Run `npm run db:migrate` after deploying this slice to create `support_teams`, `support_team_members`, `support_routing_rules`, assignment audit records and ticket team fields.
+
 ## Production
 
 Set `DATABASE_URL`, `SESSION_SECRET`, `APP_PUBLIC_URL`, `OUTBORN_ACCOUNT_AUTH_URL`, and the registered OAuth client ID. For email, also set the Resend and support-domain values described above. Run `npm run db:migrate` once for the database, then `npm start` after the Next.js build.
 
 ## Next recommended slices
 
-Assignment groups and routing, configurable business-hours SLA policies, canned replies/macros, CSAT, and support analytics should be added as separate tested slices.
+Configurable business-hours SLA policies, canned replies/macros, CSAT, and support analytics should be added as separate tested slices.
