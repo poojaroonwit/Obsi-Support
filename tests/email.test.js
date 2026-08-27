@@ -113,3 +113,17 @@ test('suppressed delivery exposes provider reason', async () => {
   assert.equal(update.status, 'failed');
   assert.match(update.error, /Recipient is suppressed/);
 });
+
+test('unmatched inbound recipient is ignored without ingestion', async () => {
+  let ingested = false;
+  const repository = {
+    resolveOrganizationForInbound: async () => null,
+    ingestInboundEmail: async () => { ingested = true; },
+    updateEmailDelivery: async () => false,
+  };
+  const transport = { retrieveReceivedEmail: async (id) => ({ id, from: 'Ada <ada@example.com>', to: ['unknown@support.example.com'], subject: 'Help', text: 'Need help' }) };
+  const service = createEmailService({ repository, transport, env: { SUPPORT_EMAIL_DOMAIN: 'support.example.com' } });
+  const result = await service.handleWebhookEvent({ type: 'email.received', data: { email_id: 'recv-unknown' } });
+  assert.deepEqual(result, { ignored: true, reason: 'unmatched-recipient' });
+  assert.equal(ingested, false);
+});
