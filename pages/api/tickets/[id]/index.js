@@ -1,6 +1,7 @@
 const { requireAgent } = require('../../../../lib/auth');
 const { getTicket, updateTicket } = require('../../../../lib/repository');
 const { manualAssignTicket } = require('../../../../lib/routing-repository');
+const { recalculateTicketSla } = require('../../../../lib/sla-service');
 
 export default async function handler(req,res){
   const session=requireAgent(req,res); if(!session)return;
@@ -34,6 +35,11 @@ export default async function handler(req,res){
       if(Object.keys(remaining).length) ticket=await updateTicket({organizationId:session.organizationId,ticketId:req.query.id,patch:remaining});
       else ticket=await getTicket(session.organizationId,req.query.id);
       if(!ticket)return res.status(404).json({success:false,message:'Ticket not found'});
+      if(Object.prototype.hasOwnProperty.call(remaining,'priority')){
+        try { await recalculateTicketSla({organizationId:session.organizationId,ticketId:req.query.id}); }
+        catch (error) { console.error('Ticket SLA recalculation failed:', error); }
+        ticket=await getTicket(session.organizationId,req.query.id);
+      }
       return res.json({success:true,ticket});
     }
     res.setHeader('Allow','GET, PATCH'); return res.status(405).json({success:false,message:'Method not allowed'});
