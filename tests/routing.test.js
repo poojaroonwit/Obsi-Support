@@ -62,3 +62,12 @@ test('least-load selection uses load ratio, then raw load, then stable id', () =
 test('returns null when no member is eligible', () => {
   assert.equal(chooseLeastLoadMember([{ id: 'x', active: false, capacity: 10, load: 0 }]), null);
 });
+
+test('members at or above capacity are not eligible for automatic assignment', () => {
+  const chosen = chooseLeastLoadMember([
+    { id: 'full', active: true, capacity: 2, load: 2 },
+    { id: 'available', active: true, capacity: 4, load: 3 },
+  ]);
+  assert.equal(chosen.id, 'available');
+  assert.equal(chooseLeastLoadMember([{ id: 'full', active: true, capacity: 1, load: 1 }]), null);
+});
