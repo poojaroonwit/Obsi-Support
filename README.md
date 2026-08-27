@@ -19,6 +19,7 @@ Obsi Support is the customer help-desk product in the Obsi suite. It is independ
 - Automatic least-load assignment for new portal/API/email tickets.
 - Manual team/assignee reassignment with cross-team and cross-tenant validation.
 - Team/assignee inbox filters and assignment audit/system messages.
+- Canned replies/macros with variables and explicitly staged ticket actions.
 - PostgreSQL tenant isolation through `organization_id` on every ticket query.
 - Outborn Account OAuth 2.0 Authorization Code + PKCE login using client `outborn-obsi-support-web`.
 - Railway/Docker-friendly production build.
@@ -61,10 +62,20 @@ Open **Routing** from the sidebar to configure teams, agents, capacities and ord
 
 Run `npm run db:migrate` after deploying this slice to create `support_teams`, `support_team_members`, `support_routing_rules`, assignment audit records and ticket team fields.
 
+## Canned replies & macros
+
+Open **Macros** from the sidebar to create reusable customer-reply drafts. A macro can include an optional shortcut, reply body, and optional ticket actions.
+
+Supported variables are `{{requester.name}}`, `{{requester.email}}`, `{{ticket.key}}`, `{{ticket.subject}}`, `{{agent.name}}`, and `{{agent.email}}`. Unknown variables are rejected when the macro is saved.
+
+Supported action suggestions are status, priority, team, and assignee. Team/member references are validated against the current organization both when saving and when preparing a macro. Selecting a macro only inserts the rendered reply and stages its actions; it never sends a customer message or changes ticket state automatically. The agent must explicitly choose **Apply actions** and separately press **Send reply**.
+
+Run `npm run db:migrate` after deploying this slice to create `support_macros` and its tenant-scoped shortcut/indexes. If the macro migration is not present yet, ordinary inbox replies continue to work without macros.
+
 ## Production
 
 Set `DATABASE_URL`, `SESSION_SECRET`, `APP_PUBLIC_URL`, `OUTBORN_ACCOUNT_AUTH_URL`, and the registered OAuth client ID. For email, also set the Resend and support-domain values described above. Run `npm run db:migrate` once for the database, then `npm start` after the Next.js build.
 
 ## Next recommended slices
 
-Configurable business-hours SLA policies, canned replies/macros, CSAT, and support analytics should be added as separate tested slices.
+Configurable business-hours SLA policies, CSAT, and support analytics should be added as separate tested slices.
