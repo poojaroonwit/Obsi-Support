@@ -59,3 +59,10 @@ test('legacy policy remains elapsed-clock 24x7', () => {
   const targets = calculateSlaTargets(new Date('2026-08-28T10:50:00.000Z'), 'urgent', DEFAULT_SLA_POLICY);
   assert.equal(targets.firstResponseDueAt.toISOString(), '2026-08-28T11:05:00.000Z');
 });
+
+test('rejects resolution targets shorter than first response', () => {
+  assert.throws(() => normalizeBusinessHoursPolicy({
+    ...bangkokPolicy,
+    targets: { ...DEFAULT_SLA_POLICY, urgent: { firstResponseMinutes: 60, resolutionMinutes: 30 } },
+  }), /resolution.*first response/i);
+});
