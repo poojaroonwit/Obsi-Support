@@ -1,6 +1,7 @@
 const repository = require('../../../lib/repository');
 const resendTransport = require('../../../lib/email/resend');
 const { createEmailService } = require('../../../lib/email-service');
+const { routeTicket } = require('../../../lib/routing-repository');
 
 export const config = { api: { bodyParser: false } };
 
@@ -23,6 +24,9 @@ export default async function handler(req, res) {
     const event = JSON.parse(payload);
     const service = createEmailService({ repository, transport: resendTransport, env: process.env });
     const result = await service.handleWebhookEvent(event);
+    if (event.type === 'email.received' && result?.created && result?.ticket?.organizationId && result?.ticketId) {
+      await routeTicket({ organizationId: result.ticket.organizationId, ticketId: result.ticketId });
+    }
     return res.status(200).json({ success: true, result });
   } catch (error) {
     console.error('Resend webhook failed:', error);
