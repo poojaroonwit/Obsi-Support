@@ -7,6 +7,7 @@ Obsi Support is the customer help-desk product in the Obsi suite. It is independ
 - Agent inbox with New/Open/Pending/Resolved queues and search.
 - Ticket detail with customer conversation, internal notes, status and priority management.
 - Priority-based first-response and resolution SLA targets with breach state.
+- Configurable 24×7 or business-hours SLA policies with workspace timezone and holidays.
 - Public request form per organization.
 - Private requester portal with secure hashed, expiring tokens and customer replies.
 - Customer replies reopen resolved/pending tickets.
@@ -61,10 +62,24 @@ Open **Routing** from the sidebar to configure teams, agents, capacities and ord
 
 Run `npm run db:migrate` after deploying this slice to create `support_teams`, `support_team_members`, `support_routing_rules`, assignment audit records and ticket team fields.
 
+## SLA policies
+
+Open **SLA** from the sidebar to configure how SLA clocks run.
+
+- With no custom policy, Obsi Support keeps the original 24×7 targets: Urgent 15m/4h, High 1h/8h, Normal 4h/24h, Low 8h/48h.
+- A custom policy can keep 24×7 timing with different targets or enable business-time counting.
+- Business-time policies use an IANA timezone, Mon–Sun working windows, local holiday dates, and per-priority first-response/resolution minutes.
+- Weekends, closed hours and holidays do not consume SLA time when business-time mode is enabled.
+- New portal/API/email tickets use the current workspace policy. Changing ticket priority recalculates the deadline from the original ticket creation time using the current policy.
+- Saving or deleting a policy does not silently rewrite existing ticket deadlines. Resetting removes the custom row and returns future tickets to platform 24×7 defaults.
+- SLA calculation failures never block ticket intake; existing stored 24×7 deadlines remain as the safe fallback.
+
+Run `npm run db:migrate` after deploying this slice to create `support_sla_policies`.
+
 ## Production
 
 Set `DATABASE_URL`, `SESSION_SECRET`, `APP_PUBLIC_URL`, `OUTBORN_ACCOUNT_AUTH_URL`, and the registered OAuth client ID. For email, also set the Resend and support-domain values described above. Run `npm run db:migrate` once for the database, then `npm start` after the Next.js build.
 
 ## Next recommended slices
 
-Configurable business-hours SLA policies, canned replies/macros, CSAT, and support analytics should be added as separate tested slices.
+Canned replies/macros, CSAT, and support analytics should be added as separate tested slices.
