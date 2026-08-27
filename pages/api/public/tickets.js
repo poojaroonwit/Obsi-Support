@@ -1,3 +1,20 @@
 const { createTicket, resolveOrganizationBySlug } = require('../../../lib/repository');
+const { routeTicket } = require('../../../lib/routing-repository');
 const { resolveAppBaseUrl } = require('../../../lib/outborn/user-oauth');
-export default async function handler(req,res){if(req.method!=='POST')return res.status(405).json({success:false,message:'Method not allowed'});try{const slug=String(req.body?.organizationSlug||'').trim();if(!slug)return res.status(400).json({success:false,message:'Organization is required.'});const organization=await resolveOrganizationBySlug(slug);if(!organization)return res.status(404).json({success:false,message:'Support workspace not found.'});const created=await createTicket({organizationId:organization.organization_id,organizationSlug:organization.slug,input:req.body});const base=resolveAppBaseUrl(req);return res.status(201).json({success:true,ticket:created.ticket,portalUrl:`${base}/portal/${created.portalToken}`});}catch(error){console.error(error);return res.status(400).json({success:false,message:error.message||'Unable to submit request.'});}}
+
+export default async function handler(req,res){
+  if(req.method!=='POST') return res.status(405).json({success:false,message:'Method not allowed'});
+  try{
+    const slug=String(req.body?.organizationSlug||'').trim();
+    if(!slug) return res.status(400).json({success:false,message:'Organization is required.'});
+    const organization=await resolveOrganizationBySlug(slug);
+    if(!organization) return res.status(404).json({success:false,message:'Support workspace not found.'});
+    const created=await createTicket({organizationId:organization.organization_id,organizationSlug:organization.slug,input:req.body});
+    await routeTicket({organizationId:organization.organization_id,ticketId:created.ticket.id});
+    const base=resolveAppBaseUrl(req);
+    return res.status(201).json({success:true,ticket:created.ticket,portalUrl:`${base}/portal/${created.portalToken}`});
+  }catch(error){
+    console.error(error);
+    return res.status(400).json({success:false,message:error.message||'Unable to submit request.'});
+  }
+}
