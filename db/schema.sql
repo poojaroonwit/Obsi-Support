@@ -2,9 +2,12 @@ CREATE TABLE IF NOT EXISTS support_organizations (
   organization_id TEXT PRIMARY KEY,
   slug TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
+  support_email_address VARCHAR(320),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE support_organizations ADD COLUMN IF NOT EXISTS support_email_address VARCHAR(320);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_support_organizations_email ON support_organizations (lower(support_email_address)) WHERE support_email_address IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS support_tickets (
   id UUID PRIMARY KEY,
@@ -40,9 +43,23 @@ CREATE TABLE IF NOT EXISTS support_messages (
   author_email VARCHAR(320),
   body TEXT NOT NULL,
   is_internal BOOLEAN NOT NULL DEFAULT FALSE,
+  channel VARCHAR(24) NOT NULL DEFAULT 'portal',
+  provider_email_id TEXT,
+  external_message_id TEXT,
+  delivery_status VARCHAR(24),
+  delivery_error TEXT,
+  attachments JSONB NOT NULL DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS channel VARCHAR(24) NOT NULL DEFAULT 'portal';
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS provider_email_id TEXT;
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS external_message_id TEXT;
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS delivery_status VARCHAR(24);
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS delivery_error TEXT;
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS attachments JSONB NOT NULL DEFAULT '[]'::jsonb;
 CREATE INDEX IF NOT EXISTS idx_support_messages_ticket_created ON support_messages (ticket_id, created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_support_messages_provider_email ON support_messages (provider_email_id) WHERE provider_email_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_support_messages_external_message ON support_messages (external_message_id) WHERE external_message_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS support_portal_tokens (
   token_hash CHAR(64) PRIMARY KEY,

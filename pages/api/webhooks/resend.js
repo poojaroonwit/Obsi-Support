@@ -1,0 +1,31 @@
+const repository = require('../../../lib/repository');
+const resendTransport = require('../../../lib/email/resend');
+const { createEmailService } = require('../../../lib/email-service');
+
+export const config = { api: { bodyParser: false } };
+
+const readRawBody = (req) => new Promise((resolve, reject) => {
+  const chunks = [];
+  req.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+  req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+  req.on('error', reject);
+});
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ success: false, message: 'Method not allowed' });
+  }
+  try {
+    const payload = await readRawBody(req);
+    const verified = resendTransport.verifySvixSignature({ payload, headers: req.headers, secret: process.env.RESEND_WEBHOOK_SECRET });
+    if (!verified) return res.status(401).json({ success: false, message: 'Invalid webhook signature' });
+    const event = JSON.parse(payload);
+    const service = createEmailService({ repository, transport: resendTransport, env: process.env });
+    const result = await service.handleWebhookEvent(event);
+    return res.status(200).json({ success: true, result });
+  } catch (error) {
+    console.error('Resend webhook failed:', error);
+    return res.status(500).json({ success: false, message: error.message || 'Webhook processing failed' });
+  }
+}
