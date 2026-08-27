@@ -12,7 +12,13 @@ export default async function handler(req,res){
     }
     if(req.method==='PATCH'){
       const patch=req.body||{};
-      if(Object.prototype.hasOwnProperty.call(patch,'teamId') || Object.prototype.hasOwnProperty.call(patch,'assigneeMemberId')){
+      if(['assigneeId','assigneeName','assigneeEmail'].some((key)=>Object.prototype.hasOwnProperty.call(patch,key))){
+        return res.status(400).json({success:false,message:'Use teamId and assigneeMemberId for assignment.'});
+      }
+      const hasTeam=Object.prototype.hasOwnProperty.call(patch,'teamId');
+      const hasMember=Object.prototype.hasOwnProperty.call(patch,'assigneeMemberId');
+      if(hasMember && !hasTeam) return res.status(400).json({success:false,message:'teamId is required when changing assignee.'});
+      if(hasTeam || hasMember){
         const assignment=await manualAssignTicket({
           organizationId:session.organizationId,
           ticketId:req.query.id,
@@ -22,7 +28,8 @@ export default async function handler(req,res){
         });
         if(!assignment)return res.status(404).json({success:false,message:'Ticket not found'});
       }
-      const remaining={...patch}; delete remaining.teamId; delete remaining.assigneeMemberId;
+      const remaining={...patch};
+      delete remaining.teamId; delete remaining.assigneeMemberId;
       let ticket;
       if(Object.keys(remaining).length) ticket=await updateTicket({organizationId:session.organizationId,ticketId:req.query.id,patch:remaining});
       else ticket=await getTicket(session.organizationId,req.query.id);
