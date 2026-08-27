@@ -104,3 +104,12 @@ test('agent email reply is threaded and delivery state is persisted', async () =
   assert.equal(sent.idempotencyKey, 'ticket-message/msg1');
   assert.deepEqual(marked, { ticketId: 't1', messageId: 'msg1', providerEmailId: 'provider-1', status: 'sent', error: '' });
 });
+
+test('suppressed delivery exposes provider reason', async () => {
+  let update;
+  const repository = { updateEmailDelivery: async (payload) => { update = payload; return true; } };
+  const service = createEmailService({ repository, transport: {}, env: {} });
+  await service.handleWebhookEvent({ type: 'email.suppressed', data: { email_id: 'sent-2', suppressed: { message: 'Recipient is suppressed' } } });
+  assert.equal(update.status, 'failed');
+  assert.match(update.error, /Recipient is suppressed/);
+});
