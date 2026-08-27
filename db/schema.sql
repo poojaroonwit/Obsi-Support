@@ -9,6 +9,17 @@ CREATE TABLE IF NOT EXISTS support_organizations (
 ALTER TABLE support_organizations ADD COLUMN IF NOT EXISTS support_email_address VARCHAR(320);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_support_organizations_email ON support_organizations (lower(support_email_address)) WHERE support_email_address IS NOT NULL;
 
+CREATE TABLE IF NOT EXISTS support_sla_policies (
+  organization_id TEXT PRIMARY KEY REFERENCES support_organizations(organization_id) ON DELETE CASCADE,
+  enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  timezone VARCHAR(100) NOT NULL DEFAULT 'UTC',
+  schedule JSONB NOT NULL DEFAULT '{}'::jsonb,
+  holidays JSONB NOT NULL DEFAULT '[]'::jsonb,
+  targets JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS support_teams (
   id UUID PRIMARY KEY,
   organization_id TEXT NOT NULL REFERENCES support_organizations(organization_id) ON DELETE CASCADE,
