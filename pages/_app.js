@@ -3,4 +3,5 @@ import '../styles/routing.css';
 import '../styles/sla.css';
 import '../styles/macros.css';
 import '../styles/csat.css';
+import '../styles/analytics.css';
 export default function App({ Component, pageProps }) { return <Component {...pageProps} />; }
