@@ -107,6 +107,23 @@ CREATE INDEX IF NOT EXISTS idx_support_tickets_requester ON support_tickets (org
 CREATE INDEX IF NOT EXISTS idx_support_tickets_org_team_status ON support_tickets (organization_id, team_id, status, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_support_tickets_org_assignee_status ON support_tickets (organization_id, assignee_id, status, updated_at DESC);
 
+CREATE TABLE IF NOT EXISTS support_csat_surveys (
+  id UUID PRIMARY KEY,
+  organization_id TEXT NOT NULL REFERENCES support_organizations(organization_id) ON DELETE CASCADE,
+  ticket_id UUID NOT NULL UNIQUE REFERENCES support_tickets(id) ON DELETE CASCADE,
+  token_hash CHAR(64) NOT NULL UNIQUE,
+  rating SMALLINT CHECK (rating BETWEEN 1 AND 5),
+  comment TEXT,
+  submitted_at TIMESTAMPTZ,
+  invitation_sent_at TIMESTAMPTZ,
+  provider_email_id TEXT,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_support_csat_org_submitted ON support_csat_surveys (organization_id, submitted_at DESC);
+CREATE INDEX IF NOT EXISTS idx_support_csat_org_created ON support_csat_surveys (organization_id, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS support_messages (
   id UUID PRIMARY KEY,
   ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
