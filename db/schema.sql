@@ -62,6 +62,20 @@ CREATE TABLE IF NOT EXISTS support_routing_rules (
 );
 CREATE INDEX IF NOT EXISTS idx_support_routing_rules_org_order ON support_routing_rules (organization_id, enabled, sort_order, created_at);
 
+CREATE TABLE IF NOT EXISTS support_macros (
+  id UUID PRIMARY KEY,
+  organization_id TEXT NOT NULL REFERENCES support_organizations(organization_id) ON DELETE CASCADE,
+  name VARCHAR(160) NOT NULL,
+  shortcut VARCHAR(80),
+  body TEXT NOT NULL,
+  actions JSONB NOT NULL DEFAULT '{}'::jsonb,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_support_macros_org_active_name ON support_macros (organization_id, active, name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_support_macros_org_shortcut ON support_macros (organization_id, shortcut) WHERE shortcut IS NOT NULL AND shortcut <> '';
+
 CREATE TABLE IF NOT EXISTS support_tickets (
   id UUID PRIMARY KEY,
   ticket_number BIGSERIAL UNIQUE NOT NULL,
