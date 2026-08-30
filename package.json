@@ -11,6 +11,7 @@
     "db:migrate": "node scripts/migrate.js"
   },
   "dependencies": {
+    "@obsi/knowledgebase-sdk": "0.1.0",
     "cookie": "1.0.2",
     "jsonwebtoken": "9.0.3",
     "next": "15.5.21",
