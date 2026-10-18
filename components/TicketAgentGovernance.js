@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-
 export const RECOMMENDED_TICKET_GOVERNANCE = {
   enabled: true,
   requireHumanReview: true,
