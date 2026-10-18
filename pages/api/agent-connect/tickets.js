@@ -2,6 +2,7 @@ const { requireAgentConnect } = require('../../../lib/outborn/agent-connect-auth
 const { addAgentMessage, createTicket, getTicket, listTickets, updateTicket } = require('../../../lib/repository');
 const { routeTicket } = require('../../../lib/routing-repository');
 const { recalculateTicketSla } = require('../../../lib/sla-service');
+const { redactTicketForAgent, validateAutomatedTicketAction } = require('../../../lib/ticket-agent-governance');
 
 const tryRoute = async (organizationId, ticketId) => {
   try { await routeTicket({ organizationId, ticketId }); }
@@ -22,10 +23,10 @@ export default async function handler(req, res) {
       if (id) {
         const ticket = await getTicket(session.organizationId, id);
         if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found.' });
-        return res.json({ success: true, ticket });
+        return res.json({ success: true, ticket: redactTicketForAgent(ticket) });
       }
       const tickets = await listTickets(session.organizationId, { status: req.query.status, search: req.query.search });
-      return res.json({ success: true, tickets });
+      return res.json({ success: true, tickets: tickets.map(redactTicketForAgent) });
     }
 
     if (req.method === 'POST') {
@@ -33,6 +34,9 @@ export default async function handler(req, res) {
       if (operation === 'reply') {
         const ticketId = String(req.body?.id || '').trim();
         if (!ticketId) return res.status(400).json({ success: false, message: 'Ticket id is required.' });
+        const currentTicket = await getTicket(session.organizationId, ticketId);
+        if (!currentTicket) return res.status(404).json({ success: false, message: 'Ticket not found.' });
+        validateAutomatedTicketAction(currentTicket, 'reply', { isInternal: Boolean(req.body?.isInternal) });
         const inserted = await addAgentMessage({
           organizationId: session.organizationId,
           ticketId,
@@ -42,22 +46,25 @@ export default async function handler(req, res) {
           deliveryChannel: 'portal',
         });
         if (!inserted) return res.status(404).json({ success: false, message: 'Ticket not found.' });
-        return res.json({ success: true, ticket: await getTicket(session.organizationId, ticketId) });
+        return res.json({ success: true, ticket: redactTicketForAgent(await getTicket(session.organizationId, ticketId)) });
       }
 
       const created = await createTicket({
         organizationId: session.organizationId,
         organizationSlug: session.organizationSlug,
-        input: { ...req.body, channel: 'manual' },
+        input: { ...req.body, channel: 'manual', agentGovernance: undefined },
       });
       await trySla(session.organizationId, created.ticket.id);
       await tryRoute(session.organizationId, created.ticket.id);
-      return res.status(201).json({ success: true, ticket: await getTicket(session.organizationId, created.ticket.id) });
+      return res.status(201).json({ success: true, ticket: redactTicketForAgent(await getTicket(session.organizationId, created.ticket.id)) });
     }
 
     if (req.method === 'PATCH') {
       const ticketId = String(req.body?.id || '').trim();
       if (!ticketId) return res.status(400).json({ success: false, message: 'Ticket id is required.' });
+      const currentTicket = await getTicket(session.organizationId, ticketId);
+      if (!currentTicket) return res.status(404).json({ success: false, message: 'Ticket not found.' });
+      validateAutomatedTicketAction(currentTicket, 'update', req.body ?? {});
       const ticket = await updateTicket({
         organizationId: session.organizationId,
         ticketId,
@@ -70,13 +77,13 @@ export default async function handler(req, res) {
         },
       });
       if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found.' });
-      return res.json({ success: true, ticket });
+      return res.json({ success: true, ticket: redactTicketForAgent(ticket) });
     }
 
     res.setHeader('Allow', 'GET, POST, PATCH');
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   } catch (error) {
     console.error('Agent Connect ticket operation failed:', error);
-    return res.status(400).json({ success: false, message: error instanceof Error ? error.message : 'Ticket operation failed.' });
+    return res.status(error?.status || 400).json({ success: false, message: error instanceof Error ? error.message : 'Ticket operation failed.' });
   }
 }
