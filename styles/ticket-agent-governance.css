@@ -1,0 +1,27 @@
+.ticket-agent-governance{padding:14px;border:1px solid var(--line,#e9ebf0);border-radius:12px;background:transparent;display:grid;gap:10px}
+.ticket-governance-switch{display:flex;align-items:center;justify-content:space-between;gap:16px;min-width:0;cursor:pointer}
+.ticket-governance-copy{display:grid;gap:3px;min-width:0}
+.ticket-governance-copy strong{font-size:13px;font-weight:650}
+.ticket-governance-copy small,.ticket-governance-disabled,.ticket-governance-options>p{font-size:12px;line-height:1.5;color:var(--muted,#727985)}
+.ticket-governance-switch input[type=checkbox]{appearance:none;flex:none;width:37px;height:22px;margin:0;border:1px solid #b8bfca;border-radius:30px;background:#d7dce5;cursor:pointer;position:relative;transition:background .15s}
+.ticket-governance-switch input[type=checkbox]:checked{background:#191f29;border-color:#191f29}
+.ticket-governance-switch input[type=checkbox]:before{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:white;transition:transform .15s;box-shadow:0 1px 2px #0002}
+.ticket-governance-switch input[type=checkbox]:checked:before{transform:translateX(15px)}
+.ticket-governance-switch input[type=checkbox]:focus-visible{outline:2px solid #4d81d6;outline-offset:2px}
+.ticket-governance-switch input[type=checkbox]:disabled{opacity:.55;cursor:wait}
+.ticket-governance-options{display:grid;gap:13px;border-top:1px solid var(--line,#e9ebf0);padding-top:12px}
+.ticket-governance-options>p{margin:0;font-weight:600}
+.ticket-governance-disabled{margin:0}
+.ticket-create-form{display:grid;gap:13px;max-height:min(85vh,750px);overflow-y:auto}
+.ticket-create-form .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ticket-create-form label:not(.ticket-governance-switch){display:grid;gap:5px;font-size:12px;font-weight:600}
+.ticket-create-form input:not([type=checkbox]),.ticket-create-form textarea,.ticket-create-form select{width:100%;padding:9px 10px;border:1px solid var(--line,#e9ebf0);border-radius:8px;background:#fff}
+.ticket-create-form .ticket-agent-governance{margin-top:2px}
+.ticket-create-modal{position:fixed;inset:0;z-index:1000;background:#0a101b88;display:flex;align-items:center;justify-content:center;padding:18px}
+.ticket-create-modal-panel{width:min(540px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--card,#fff);border-radius:18px;padding:22px;box-shadow:0 18px 60px #0003}
+.ticket-create-modal-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ticket-create-modal-header h2{margin:0 0 14px;font-size:19px}
+.ticket-create-modal-header button{background:transparent;border:0;font-size:21px;cursor:pointer}
+.ticket-create-submit{display:flex;justify-content:flex-end;gap:10px}
+.ticket-create-error{font-size:12px;color:var(--danger,#c43d4f)}
+@media(max-width:560px){.ticket-create-form .form-grid{grid-template-columns:1fr}.ticket-create-modal-panel{padding:14px}.ticket-create-modal{align-items:flex-start;padding:10px}}
