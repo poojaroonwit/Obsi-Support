@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS support_tickets (
   channel VARCHAR(24) NOT NULL DEFAULT 'portal' CHECK (channel IN ('portal','email','chat','api','manual')),
   requester_name VARCHAR(160) NOT NULL,
   requester_email VARCHAR(320) NOT NULL,
+  agent_governance_json JSONB NOT NULL DEFAULT '{"enabled":false}'::jsonb,
   team_id UUID REFERENCES support_teams(id) ON DELETE SET NULL,
   team_name VARCHAR(160),
   assignee_id TEXT,
@@ -101,6 +102,7 @@ CREATE TABLE IF NOT EXISTS support_tickets (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS team_id UUID;
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS agent_governance_json JSONB NOT NULL DEFAULT '{"enabled":false}'::jsonb;
 ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS team_name VARCHAR(160);
 CREATE INDEX IF NOT EXISTS idx_support_tickets_org_status_updated ON support_tickets (organization_id, status, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_support_tickets_requester ON support_tickets (organization_id, requester_email);
