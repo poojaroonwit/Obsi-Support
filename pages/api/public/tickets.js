@@ -19,7 +19,7 @@ export default async function handler(req,res){
     if(!slug)return res.status(400).json({success:false,message:'Organization is required.'});
     const organization=await resolveOrganizationBySlug(slug);
     if(!organization)return res.status(404).json({success:false,message:'Support workspace not found.'});
-    const created=await createTicket({organizationId:organization.organization_id,organizationSlug:organization.slug,input:req.body});
+    const created=await createTicket({organizationId:organization.organization_id,organizationSlug:organization.slug,input:{...req.body,agentGovernance:undefined}});
     await trySla(organization.organization_id,created.ticket.id);
     await tryRoute(organization.organization_id,created.ticket.id);
     const base=resolveAppBaseUrl(req);
