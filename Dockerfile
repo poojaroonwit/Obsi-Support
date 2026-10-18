@@ -12,4 +12,4 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=builder /app ./
 EXPOSE 3000
-CMD ["npm","start"]
+CMD ["sh","-c","npm run db:migrate && exec npm start"]
